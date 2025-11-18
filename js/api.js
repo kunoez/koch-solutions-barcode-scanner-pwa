@@ -81,8 +81,10 @@ class API {
             body: JSON.stringify({ username: email, password })
         });
 
-        if (response.access_token) {
-            this.setToken(response.access_token);
+        // Handle both accessToken and access_token formats
+        const token = response.accessToken || response.access_token;
+        if (token) {
+            this.setToken(token);
         }
 
         return response;

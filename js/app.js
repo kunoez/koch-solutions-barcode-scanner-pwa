@@ -50,6 +50,7 @@ class App {
             if (projectData) {
                 this.selectedProject = JSON.parse(projectData);
                 ui.showScreen('main');
+                ui.showTab('scan');
                 await this.loadScans();
             } else {
                 // No project selected, show project selection
@@ -319,7 +320,9 @@ class App {
         try {
             const response = await api.login(email, password);
 
-            if (response.access_token) {
+            // Handle both accessToken and access_token formats
+            const token = response.accessToken || response.access_token;
+            if (token) {
                 ui.showToast('Login successful', 'success');
 
                 // Load projects
@@ -389,6 +392,7 @@ class App {
 
         ui.showToast(`Project selected: ${project.name}`, 'success');
         ui.showScreen('main');
+        ui.showTab('scan');
 
         // Get location for scan tab
         this.getCurrentLocation();

@@ -112,10 +112,13 @@ class Database {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([DB_CONFIG.STORES.SCANS], 'readonly');
             const store = transaction.objectStore(DB_CONFIG.STORES.SCANS);
-            const index = store.index('synced');
-            const request = index.getAll(false);
+            const request = store.getAll();
 
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = () => {
+                // Filter for unsynced scans
+                const pendingScans = request.result.filter(scan => scan.synced === false);
+                resolve(pendingScans);
+            };
             request.onerror = () => reject(request.error);
         });
     }
