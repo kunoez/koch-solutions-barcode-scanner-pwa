@@ -1182,3 +1182,53 @@ body {
 .icon-btn-small.damage:hover {
     background-color: rgba(255, 152, 0, 0.1);
 }
+
+/* ==================== Storage Marker ==================== */
+.storage-marker-input {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.storage-marker-input input {
+    flex: 1;
+}
+
+.storage-marker-input .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.dialog-large {
+    max-width: 500px;
+}
+
+.marker-preview {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f5f5f5;
+    border-radius: var(--border-radius);
+    border: 1px dashed var(--divider);
+}
+
+.marker-preview label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.preview-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-color);
+    word-break: break-all;
+}
+
+.preview-text.placeholder {
+    color: var(--text-disabled);
+    font-style: italic;
+    font-weight: normal;
+}

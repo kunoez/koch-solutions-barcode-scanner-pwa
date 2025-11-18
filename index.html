@@ -168,7 +168,13 @@
 
                         <div class="form-field">
                             <label>Storage Marker</label>
-                            <input type="text" id="scanComment" placeholder="Enter storage marker" required>
+                            <div class="storage-marker-input">
+                                <input type="text" id="scanComment" placeholder="Enter or generate storage marker" required>
+                                <button class="btn btn-outlined btn-small" id="generateMarkerBtn" type="button">
+                                    <i class="material-icons">auto_fix_high</i>
+                                    Generate
+                                </button>
+                            </div>
                         </div>
 
                         <div class="form-field">
@@ -212,7 +218,13 @@
 
                     <div class="form-field">
                         <label>Storage Marker</label>
-                        <input type="text" id="manualComment" placeholder="Enter storage marker" required>
+                        <div class="storage-marker-input">
+                            <input type="text" id="manualComment" placeholder="Enter or generate storage marker" required>
+                            <button class="btn btn-outlined btn-small" id="generateManualMarkerBtn" type="button">
+                                <i class="material-icons">auto_fix_high</i>
+                                Generate
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-field">
@@ -378,6 +390,58 @@
                     <div class="dialog-actions">
                         <button class="btn btn-outlined" id="cancelCompleteBtn">Cancel</button>
                         <button class="btn btn-primary" id="confirmCompleteBtn">Complete</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage Marker Generator Dialog -->
+            <div id="storageMarkerDialog" class="dialog-overlay" style="display: none;">
+                <div class="dialog-content dialog-large">
+                    <div class="dialog-header">
+                        <h3>Create Storage Marker</h3>
+                        <button class="icon-btn" id="closeMarkerDialogBtn">
+                            <i class="material-icons">close</i>
+                        </button>
+                    </div>
+                    <div class="dialog-body">
+                        <div class="form-field">
+                            <label>Site</label>
+                            <select id="markerSite">
+                                <option value="">Select site...</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Position</label>
+                            <select id="markerPosition">
+                                <option value="">Select position...</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Storage Location</label>
+                            <select id="markerLocation">
+                                <option value="">Select location...</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Area/Equipment</label>
+                            <select id="markerEquipment">
+                                <option value="">Select equipment...</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Equipment Number</label>
+                            <input type="text" id="markerEquipmentNumber" placeholder="Enter number (optional)">
+                        </div>
+                        <div class="marker-preview">
+                            <label>Storage Marker Preview</label>
+                            <div class="preview-text" id="markerPreview">
+                                Storage marker will be generated automatically...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <button class="btn btn-outlined" id="cancelMarkerBtn">Cancel</button>
+                        <button class="btn btn-primary" id="applyMarkerBtn">Apply</button>
                     </div>
                 </div>
             </div>

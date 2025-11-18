@@ -236,6 +236,47 @@ class App {
         document.getElementById('confirmCompleteBtn')?.addEventListener('click', () => {
             this.confirmCompleteSession();
         });
+
+        // Storage marker generator
+        document.getElementById('generateMarkerBtn')?.addEventListener('click', () => {
+            this.showStorageMarkerDialog('scan');
+        });
+
+        document.getElementById('generateManualMarkerBtn')?.addEventListener('click', () => {
+            this.showStorageMarkerDialog('manual');
+        });
+
+        document.getElementById('closeMarkerDialogBtn')?.addEventListener('click', () => {
+            this.closeStorageMarkerDialog();
+        });
+
+        document.getElementById('cancelMarkerBtn')?.addEventListener('click', () => {
+            this.closeStorageMarkerDialog();
+        });
+
+        document.getElementById('applyMarkerBtn')?.addEventListener('click', () => {
+            this.applyStorageMarker();
+        });
+
+        // Marker select change listeners
+        ['markerSite', 'markerPosition', 'markerLocation', 'markerEquipment', 'markerEquipmentNumber'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => {
+                this.updateMarkerPreview();
+            });
+            document.getElementById(id)?.addEventListener('input', () => {
+                this.updateMarkerPreview();
+            });
+        });
+
+        // Load positions when site changes
+        document.getElementById('markerSite')?.addEventListener('change', () => {
+            this.loadPositionsForSite();
+        });
+
+        // Load equipment when location changes (for filtering by equipmentLocations)
+        document.getElementById('markerLocation')?.addEventListener('change', () => {
+            this.loadEquipmentForLocation();
+        });
     }
 
     setupNetworkMonitoring() {
@@ -1043,6 +1084,175 @@ class App {
             console.error('Failed to cancel session:', error);
             ui.showToast('Failed to cancel session', 'error');
         }
+    }
+
+    // Storage Marker Generator
+    markerTargetType = null;
+    offlineData = null;
+
+    async showStorageMarkerDialog(targetType) {
+        this.markerTargetType = targetType;
+
+        // Load offline data if not loaded
+        if (!this.offlineData) {
+            await this.loadMarkerData();
+        }
+
+        // Reset form
+        document.getElementById('markerSite').value = '';
+        document.getElementById('markerPosition').innerHTML = '<option value="">Select position...</option>';
+        document.getElementById('markerLocation').value = '';
+        document.getElementById('markerEquipment').value = '';
+        document.getElementById('markerEquipmentNumber').value = '';
+
+        this.updateMarkerPreview();
+
+        document.getElementById('storageMarkerDialog').style.display = 'flex';
+    }
+
+    closeStorageMarkerDialog() {
+        document.getElementById('storageMarkerDialog').style.display = 'none';
+        this.markerTargetType = null;
+    }
+
+    async loadMarkerData() {
+        try {
+            // Try to get from IndexedDB first
+            this.offlineData = await db.getOfflineData('offlineData');
+
+            // If not available, fetch from API
+            if (!this.offlineData && navigator.onLine) {
+                const projectIds = this.selectedProject ? [this.selectedProject.projectId] : [];
+                this.offlineData = await api.getOfflineData(projectIds);
+                await db.saveOfflineData('offlineData', this.offlineData);
+            }
+
+            if (!this.offlineData) {
+                ui.showToast('Please sync offline data first', 'warning');
+                return;
+            }
+
+            // Populate sites
+            const siteSelect = document.getElementById('markerSite');
+            siteSelect.innerHTML = '<option value="">Select site...</option>';
+            if (this.offlineData.sites) {
+                this.offlineData.sites.forEach(site => {
+                    const option = document.createElement('option');
+                    option.value = site.code;
+                    option.textContent = `${site.code} - ${site.name}`;
+                    option.dataset.id = site.id;
+                    siteSelect.appendChild(option);
+                });
+            }
+
+            // Populate locations
+            const locationSelect = document.getElementById('markerLocation');
+            locationSelect.innerHTML = '<option value="">Select location...</option>';
+            if (this.offlineData.locations) {
+                this.offlineData.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.code;
+                    option.textContent = `${location.code} - ${location.name}`;
+                    option.dataset.id = location.id;
+                    locationSelect.appendChild(option);
+                });
+            }
+
+            // Populate equipment
+            const equipmentSelect = document.getElementById('markerEquipment');
+            equipmentSelect.innerHTML = '<option value="">Select equipment...</option>';
+            if (this.offlineData.equipments) {
+                this.offlineData.equipments.forEach(equipment => {
+                    const option = document.createElement('option');
+                    option.value = equipment.code;
+                    option.textContent = equipment.name ? `${equipment.code} - ${equipment.name}` : equipment.code;
+                    option.dataset.id = equipment.id;
+                    equipmentSelect.appendChild(option);
+                });
+            }
+
+        } catch (error) {
+            console.error('Failed to load marker data:', error);
+            ui.showToast('Failed to load data for marker generation', 'error');
+        }
+    }
+
+    loadPositionsForSite() {
+        const siteSelect = document.getElementById('markerSite');
+        const positionSelect = document.getElementById('markerPosition');
+
+        positionSelect.innerHTML = '<option value="">Select position...</option>';
+
+        if (!this.offlineData || !this.offlineData.positions) return;
+
+        const selectedOption = siteSelect.selectedOptions[0];
+        if (!selectedOption || !selectedOption.dataset.id) return;
+
+        const siteId = parseInt(selectedOption.dataset.id);
+
+        // Filter positions by site
+        const sitePositions = this.offlineData.positions.filter(p => p.siteId === siteId);
+
+        sitePositions.forEach(position => {
+            const option = document.createElement('option');
+            option.value = position.number;
+            option.textContent = position.number;
+            positionSelect.appendChild(option);
+        });
+
+        this.updateMarkerPreview();
+    }
+
+    loadEquipmentForLocation() {
+        // This could filter equipment based on equipmentLocations if needed
+        // For now, we show all equipment
+        this.updateMarkerPreview();
+    }
+
+    updateMarkerPreview() {
+        const site = document.getElementById('markerSite').value;
+        const position = document.getElementById('markerPosition').value;
+        const location = document.getElementById('markerLocation').value;
+        const equipment = document.getElementById('markerEquipment').value;
+        const equipmentNumber = document.getElementById('markerEquipmentNumber').value;
+
+        const preview = document.getElementById('markerPreview');
+
+        // Build marker string
+        const parts = [];
+
+        if (site) parts.push(site);
+        if (position) parts.push(position);
+        if (location) parts.push(location);
+        if (equipment) parts.push(equipment);
+        if (equipmentNumber) parts.push(equipmentNumber);
+
+        if (parts.length > 0) {
+            preview.textContent = parts.join('-');
+            preview.classList.remove('placeholder');
+        } else {
+            preview.textContent = 'Storage marker will be generated automatically...';
+            preview.classList.add('placeholder');
+        }
+    }
+
+    applyStorageMarker() {
+        const preview = document.getElementById('markerPreview').textContent;
+
+        if (preview === 'Storage marker will be generated automatically...') {
+            ui.showToast('Please select at least one option', 'error');
+            return;
+        }
+
+        // Apply to the correct input based on target type
+        if (this.markerTargetType === 'scan') {
+            document.getElementById('scanComment').value = preview;
+        } else if (this.markerTargetType === 'manual') {
+            document.getElementById('manualComment').value = preview;
+        }
+
+        this.closeStorageMarkerDialog();
+        ui.showToast('Storage marker applied', 'success');
     }
 }
 
