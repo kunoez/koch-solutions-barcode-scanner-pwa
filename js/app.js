@@ -185,6 +185,57 @@ class App {
                 }
             });
         }
+
+        // Package scanning
+        document.getElementById('startPackageSessionBtn')?.addEventListener('click', () => {
+            this.startPackageSession();
+        });
+
+        document.getElementById('scanPackageBarcodeBtn')?.addEventListener('click', () => {
+            this.scanPackageBarcode();
+        });
+
+        document.getElementById('addPartBtn')?.addEventListener('click', () => {
+            this.addPart();
+        });
+
+        document.getElementById('scanPartBtn')?.addEventListener('click', () => {
+            this.scanPartBarcode();
+        });
+
+        document.getElementById('completeSessionBtn')?.addEventListener('click', () => {
+            this.showCompleteSessionDialog();
+        });
+
+        document.getElementById('cancelSessionBtn')?.addEventListener('click', () => {
+            this.cancelPackageSession();
+        });
+
+        // Damage dialog
+        document.getElementById('closeDamageDialogBtn')?.addEventListener('click', () => {
+            this.closeDamageDialog();
+        });
+
+        document.getElementById('cancelDamageBtn')?.addEventListener('click', () => {
+            this.closeDamageDialog();
+        });
+
+        document.getElementById('saveDamageBtn')?.addEventListener('click', () => {
+            this.saveDamage();
+        });
+
+        document.getElementById('addDamagePhotoBtn')?.addEventListener('click', () => {
+            this.openPhotoCapture('damage');
+        });
+
+        // Complete session dialog
+        document.getElementById('cancelCompleteBtn')?.addEventListener('click', () => {
+            this.closeCompleteSessionDialog();
+        });
+
+        document.getElementById('confirmCompleteBtn')?.addEventListener('click', () => {
+            this.confirmCompleteSession();
+        });
     }
 
     setupNetworkMonitoring() {
@@ -444,8 +495,18 @@ class App {
         if (!files.length) return;
 
         const type = event.target.dataset.type;
-        const manager = type === 'scan' ? this.scanPhotoManager : this.manualPhotoManager;
-        const gridId = type === 'scan' ? 'photoGrid' : 'manualPhotoGrid';
+        let manager, gridId;
+
+        if (type === 'scan') {
+            manager = this.scanPhotoManager;
+            gridId = 'photoGrid';
+        } else if (type === 'manual') {
+            manager = this.manualPhotoManager;
+            gridId = 'manualPhotoGrid';
+        } else if (type === 'damage') {
+            manager = packageManager.damagePhotoManager;
+            gridId = 'damagePhotoGrid';
+        }
 
         try {
             for (let file of files) {
@@ -706,6 +767,281 @@ class App {
         } catch (error) {
             console.error('Failed to load scans:', error);
             ui.showToast('Failed to load scans', 'error');
+        }
+    }
+
+    // Package Scanning
+    async startPackageSession() {
+        const barcode = document.getElementById('packageBarcode').value.trim();
+
+        if (!barcode) {
+            ui.showToast('Package barcode is required', 'error');
+            return;
+        }
+
+        // Get location
+        try {
+            await this.getCurrentLocation();
+        } catch (error) {
+            ui.showToast('Location is required to start session', 'error');
+            return;
+        }
+
+        if (!this.currentLocation) {
+            ui.showToast('Location is required to start session', 'error');
+            return;
+        }
+
+        try {
+            await packageManager.startSession(barcode, this.currentLocation);
+
+            // Update UI
+            document.getElementById('packageNoSession').style.display = 'none';
+            document.getElementById('packageActiveSession').style.display = 'block';
+            document.getElementById('activePackageBarcode').textContent = `Package: ${barcode}`;
+            document.getElementById('packageBarcode').value = '';
+
+            this.updatePackageProgress();
+            this.renderScannedParts();
+
+            ui.showToast('Session started', 'success');
+        } catch (error) {
+            console.error('Failed to start session:', error);
+            ui.showToast('Failed to start session', 'error');
+        }
+    }
+
+    async scanPackageBarcode() {
+        // Use the same scanner for package barcodes
+        try {
+            const video = document.createElement('video');
+            video.setAttribute('playsinline', '');
+
+            await barcodeScanner.init(video, (barcode) => {
+                document.getElementById('packageBarcode').value = barcode;
+                barcodeScanner.stopScanning();
+                ui.showToast('Package barcode scanned', 'success');
+            });
+
+            await barcodeScanner.startScanning();
+        } catch (error) {
+            ui.showToast(error.message, 'error');
+        }
+    }
+
+    async addPart() {
+        const barcode = document.getElementById('partBarcode').value.trim();
+
+        if (!barcode) {
+            ui.showToast('Part barcode is required', 'error');
+            return;
+        }
+
+        try {
+            await packageManager.scanPart(barcode);
+            document.getElementById('partBarcode').value = '';
+
+            this.updatePackageProgress();
+            this.renderScannedParts();
+
+            ui.showToast('Part added', 'success');
+        } catch (error) {
+            console.error('Failed to add part:', error);
+            ui.showToast('Failed to add part', 'error');
+        }
+    }
+
+    async scanPartBarcode() {
+        try {
+            const video = document.createElement('video');
+            video.setAttribute('playsinline', '');
+
+            await barcodeScanner.init(video, async (barcode) => {
+                barcodeScanner.stopScanning();
+                document.getElementById('partBarcode').value = barcode;
+                await this.addPart();
+            });
+
+            await barcodeScanner.startScanning();
+        } catch (error) {
+            ui.showToast(error.message, 'error');
+        }
+    }
+
+    updatePackageProgress() {
+        const progress = packageManager.getProgress();
+
+        if (progress) {
+            document.getElementById('sessionProgress').textContent =
+                `${progress.scanned}/${progress.total} parts scanned`;
+            document.getElementById('sessionProgressBar').style.width =
+                `${progress.percentage}%`;
+        }
+    }
+
+    renderScannedParts() {
+        const container = document.getElementById('scannedPartsList');
+        const parts = packageManager.scannedParts;
+
+        if (parts.length === 0) {
+            container.innerHTML = '<p class="empty-text">No parts scanned yet</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        parts.forEach(part => {
+            const item = document.createElement('div');
+            item.className = 'part-item';
+
+            const statusClass = part.status === 'damaged' ? 'damaged' : 'normal';
+            const statusText = part.status === 'damaged' ? 'Damaged' : 'OK';
+
+            item.innerHTML = `
+                <div class="part-info">
+                    <div class="part-barcode">${part.partBarcode}</div>
+                    ${part.partName ? `<div class="part-name">${part.partName}</div>` : ''}
+                </div>
+                <div class="part-actions">
+                    <span class="part-status ${statusClass}">${statusText}</span>
+                    <button class="icon-btn-small damage" data-part-id="${part.clientPartId}" title="Report damage">
+                        <i class="material-icons">report_problem</i>
+                    </button>
+                </div>
+            `;
+
+            // Add damage button listener
+            item.querySelector('.damage').addEventListener('click', () => {
+                this.showDamageDialog(part.clientPartId);
+            });
+
+            container.appendChild(item);
+        });
+    }
+
+    // Damage Dialog
+    currentDamagePartId = null;
+
+    showDamageDialog(partId) {
+        this.currentDamagePartId = partId;
+        packageManager.damagePhotoManager.clear();
+
+        // Reset form
+        document.getElementById('damageType').value = '';
+        document.getElementById('damageSeverity').value = '';
+        document.getElementById('damageNotes').value = '';
+        document.getElementById('damagePhotoGrid').innerHTML = '';
+
+        document.getElementById('damageDialog').style.display = 'flex';
+    }
+
+    closeDamageDialog() {
+        this.currentDamagePartId = null;
+        packageManager.damagePhotoManager.clear();
+        document.getElementById('damageDialog').style.display = 'none';
+    }
+
+    async saveDamage() {
+        const damageType = document.getElementById('damageType').value;
+        const damageSeverity = document.getElementById('damageSeverity').value;
+        const damageNotes = document.getElementById('damageNotes').value;
+
+        if (!damageType) {
+            ui.showToast('Damage type is required', 'error');
+            return;
+        }
+
+        if (!damageSeverity) {
+            ui.showToast('Severity is required', 'error');
+            return;
+        }
+
+        try {
+            await packageManager.reportDamage(
+                this.currentDamagePartId,
+                { damageType, damageSeverity, damageNotes },
+                packageManager.damagePhotoManager.getPhotos()
+            );
+
+            this.closeDamageDialog();
+            this.renderScannedParts();
+
+            ui.showToast('Damage reported', 'success');
+        } catch (error) {
+            console.error('Failed to report damage:', error);
+            ui.showToast('Failed to report damage', 'error');
+        }
+    }
+
+    // Complete Session
+    showCompleteSessionDialog() {
+        const unscanned = packageManager.getUnscannedParts();
+
+        if (unscanned.length > 0) {
+            document.getElementById('unscannedPartsWarning').style.display = 'block';
+            const list = document.getElementById('unscannedPartsList');
+            list.innerHTML = '<ul>' +
+                unscanned.map(p => `<li>${p.partBarcode} - ${p.partName || 'Unknown'}</li>`).join('') +
+                '</ul>';
+        } else {
+            document.getElementById('unscannedPartsWarning').style.display = 'none';
+        }
+
+        document.getElementById('sessionStorageLocation').value = '';
+        document.getElementById('sessionNotes').value = '';
+        document.getElementById('completeSessionDialog').style.display = 'flex';
+    }
+
+    closeCompleteSessionDialog() {
+        document.getElementById('completeSessionDialog').style.display = 'none';
+    }
+
+    async confirmCompleteSession() {
+        const storageLocation = document.getElementById('sessionStorageLocation').value.trim();
+        const notes = document.getElementById('sessionNotes').value.trim();
+
+        if (!storageLocation) {
+            ui.showToast('Storage location is required', 'error');
+            return;
+        }
+
+        try {
+            await packageManager.completeSession(storageLocation, notes);
+
+            this.closeCompleteSessionDialog();
+
+            // Reset UI
+            document.getElementById('packageNoSession').style.display = 'block';
+            document.getElementById('packageActiveSession').style.display = 'none';
+            document.getElementById('scannedPartsList').innerHTML = '<p class="empty-text">No parts scanned yet</p>';
+
+            ui.showToast('Session completed successfully', 'success');
+        } catch (error) {
+            console.error('Failed to complete session:', error);
+            ui.showToast('Failed to complete session', 'error');
+        }
+    }
+
+    async cancelPackageSession() {
+        const confirmed = await ui.confirm(
+            'Cancel Session',
+            'Are you sure you want to cancel this session? All scanned data will be lost.'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await packageManager.cancelSession();
+
+            // Reset UI
+            document.getElementById('packageNoSession').style.display = 'block';
+            document.getElementById('packageActiveSession').style.display = 'none';
+            document.getElementById('scannedPartsList').innerHTML = '<p class="empty-text">No parts scanned yet</p>';
+
+            ui.showToast('Session cancelled', 'warning');
+        } catch (error) {
+            console.error('Failed to cancel session:', error);
+            ui.showToast('Failed to cancel session', 'error');
         }
     }
 }

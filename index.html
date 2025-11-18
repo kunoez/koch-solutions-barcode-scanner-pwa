@@ -234,13 +234,150 @@
             <!-- Package Tab -->
             <div id="packageTab" class="tab-content">
                 <div class="package-container">
-                    <h2>Package Scanning</h2>
-                    <p class="subtitle">Scan package barcodes to track parts</p>
+                    <!-- No Active Session State -->
+                    <div id="packageNoSession">
+                        <h2>Package Scanning</h2>
+                        <p class="subtitle">Scan package barcodes to track parts</p>
 
-                    <div id="packageContent" class="empty-state">
-                        <i class="material-icons">inventory_2</i>
-                        <p>Package scanning will be available here</p>
-                        <p class="small">Scan a package barcode to begin</p>
+                        <div class="form-field">
+                            <label>Package Barcode</label>
+                            <input type="text" id="packageBarcode" placeholder="Scan or enter package barcode">
+                        </div>
+
+                        <button class="btn btn-primary btn-large" id="startPackageSessionBtn">
+                            <i class="material-icons">play_arrow</i>
+                            Start Session
+                        </button>
+
+                        <button class="btn btn-outlined mt-16" id="scanPackageBarcodeBtn">
+                            <i class="material-icons">qr_code_scanner</i>
+                            Scan Package Barcode
+                        </button>
+                    </div>
+
+                    <!-- Active Session State -->
+                    <div id="packageActiveSession" style="display: none;">
+                        <div class="session-header">
+                            <h2 id="activePackageBarcode">Package: ---</h2>
+                            <div class="progress-info">
+                                <span id="sessionProgress">0/0 parts scanned</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="sessionProgressBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Part Barcode</label>
+                            <input type="text" id="partBarcode" placeholder="Scan or enter part barcode">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-outlined" id="scanPartBtn">
+                                <i class="material-icons">qr_code_scanner</i>
+                                Scan
+                            </button>
+                            <button class="btn btn-primary" id="addPartBtn">
+                                <i class="material-icons">add</i>
+                                Add Part
+                            </button>
+                        </div>
+
+                        <h3 class="mt-16">Scanned Parts</h3>
+                        <div id="scannedPartsList" class="parts-list">
+                            <p class="empty-text">No parts scanned yet</p>
+                        </div>
+
+                        <div class="session-actions mt-16">
+                            <button class="btn btn-outlined" id="cancelSessionBtn">
+                                <i class="material-icons">close</i>
+                                Cancel
+                            </button>
+                            <button class="btn btn-primary" id="completeSessionBtn">
+                                <i class="material-icons">check</i>
+                                Complete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Damage Report Dialog -->
+            <div id="damageDialog" class="dialog-overlay" style="display: none;">
+                <div class="dialog-content">
+                    <div class="dialog-header">
+                        <h3>Report Damage</h3>
+                        <button class="icon-btn" id="closeDamageDialogBtn">
+                            <i class="material-icons">close</i>
+                        </button>
+                    </div>
+                    <div class="dialog-body">
+                        <div class="form-field">
+                            <label>Damage Type</label>
+                            <select id="damageType">
+                                <option value="">Select type...</option>
+                                <option value="scratch">Scratch</option>
+                                <option value="dent">Dent</option>
+                                <option value="crack">Crack</option>
+                                <option value="missing_piece">Missing Piece</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Severity</label>
+                            <select id="damageSeverity">
+                                <option value="">Select severity...</option>
+                                <option value="minor">Minor</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="severe">Severe</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Notes</label>
+                            <textarea id="damageNotes" rows="3" placeholder="Describe the damage..."></textarea>
+                        </div>
+                        <div class="form-field">
+                            <label>Photos</label>
+                            <div class="photo-grid" id="damagePhotoGrid"></div>
+                            <button class="btn btn-outlined btn-small" id="addDamagePhotoBtn">
+                                <i class="material-icons">add_photo_alternate</i>
+                                Add Photo
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <button class="btn btn-outlined" id="cancelDamageBtn">Cancel</button>
+                        <button class="btn btn-primary" id="saveDamageBtn">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complete Session Dialog -->
+            <div id="completeSessionDialog" class="dialog-overlay" style="display: none;">
+                <div class="dialog-content">
+                    <div class="dialog-header">
+                        <h3>Complete Session</h3>
+                    </div>
+                    <div class="dialog-body">
+                        <div id="unscannedPartsWarning" style="display: none;">
+                            <div class="warning-banner">
+                                <i class="material-icons">warning</i>
+                                <span>Some parts were not scanned and will be marked as missing.</span>
+                            </div>
+                            <div id="unscannedPartsList" class="unscanned-list"></div>
+                        </div>
+                        <div class="form-field">
+                            <label>Storage Location</label>
+                            <input type="text" id="sessionStorageLocation" placeholder="Enter storage location" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Notes (Optional)</label>
+                            <textarea id="sessionNotes" rows="3" placeholder="Add any notes..."></textarea>
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <button class="btn btn-outlined" id="cancelCompleteBtn">Cancel</button>
+                        <button class="btn btn-primary" id="confirmCompleteBtn">Complete</button>
                     </div>
                 </div>
             </div>
@@ -302,6 +439,7 @@
     <script src="/js/scanner.js"></script>
     <script src="/js/location.js"></script>
     <script src="/js/ui.js"></script>
+    <script src="/js/package.js"></script>
     <script src="/js/app.js"></script>
 
     <script>

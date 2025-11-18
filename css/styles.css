@@ -933,3 +933,252 @@ body {
 .mb-16 {
     margin-bottom: 16px;
 }
+
+/* ==================== Package Scanning ==================== */
+.package-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.session-header {
+    margin-bottom: 24px;
+}
+
+.session-header h2 {
+    margin-bottom: 12px;
+}
+
+.progress-info {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.progress-bar {
+    height: 8px;
+    background-color: var(--divider);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.parts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.part-item {
+    background-color: var(--surface);
+    padding: 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--divider);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.part-info {
+    flex: 1;
+}
+
+.part-barcode {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.part-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.part-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.part-status {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.part-status.normal {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.part-status.damaged {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.session-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.session-actions .btn {
+    flex: 1;
+}
+
+.empty-text {
+    color: var(--text-disabled);
+    text-align: center;
+    padding: 16px;
+    font-style: italic;
+}
+
+/* ==================== Dialogs ==================== */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 16px;
+}
+
+.dialog-content {
+    background-color: var(--surface);
+    border-radius: 8px;
+    box-shadow: var(--shadow-3);
+    max-width: 400px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.dialog-header {
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--divider);
+}
+
+.dialog-header h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.dialog-body {
+    padding: 16px;
+}
+
+.dialog-actions {
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    border-top: 1px solid var(--divider);
+}
+
+.dialog-actions .btn {
+    width: auto;
+    min-width: 80px;
+}
+
+/* ==================== Select & Textarea ==================== */
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid var(--divider);
+    border-radius: var(--border-radius);
+    background-color: var(--surface);
+    font-family: inherit;
+}
+
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    border-width: 2px;
+    padding: 11px;
+}
+
+.form-field select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 32px;
+}
+
+/* ==================== Warning Banner ==================== */
+.warning-banner {
+    background-color: #fff3e0;
+    color: #e65100;
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.warning-banner .material-icons {
+    font-size: 20px;
+}
+
+.unscanned-list {
+    background-color: #f5f5f5;
+    border-radius: var(--border-radius);
+    padding: 12px;
+    margin-bottom: 16px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+.unscanned-list li {
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+}
+
+/* ==================== Small Icon Button ==================== */
+.icon-btn-small {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn-small:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.icon-btn-small .material-icons {
+    font-size: 18px;
+}
+
+.icon-btn-small.damage {
+    color: var(--warning-color);
+}
+
+.icon-btn-small.damage:hover {
+    background-color: rgba(255, 152, 0, 0.1);
+}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate PWA Icons</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .icon-preview { margin: 10px; display: inline-block; text-align: center; }
+        .icon-preview img { border: 1px solid #ccc; }
+        .icon-preview p { margin: 5px 0; font-size: 12px; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; }
+        #status { margin-top: 20px; padding: 10px; background: #e8f5e9; }
+    </style>
+</head>
+<body>
+    <h1>PWA Icon Generator</h1>
+    <p>This tool generates all required PWA icon sizes from the SVG source.</p>
+
+    <div id="previews"></div>
+
+    <button onclick="generateAllIcons()">Generate All Icons</button>
+    <button onclick="downloadAllIcons()">Download All Icons</button>
+
+    <div id="status"></div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const icons = {};
+
+        async function loadSVG() {
+            const response = await fetch('icon.svg');
+            return await response.text();
+        }
+
+        function svgToPng(svgText, size) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                const img = new Image();
+                const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(svgBlob);
+
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, size, size);
+                    URL.revokeObjectURL(url);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+
+                img.src = url;
+            });
+        }
+
+        async function generateAllIcons() {
+            const status = document.getElementById('status');
+            const previews = document.getElementById('previews');
+            status.innerHTML = 'Generating icons...';
+            previews.innerHTML = '';
+
+            try {
+                const svgText = await loadSVG();
+
+                for (const size of sizes) {
+                    const dataUrl = await svgToPng(svgText, size);
+                    icons[size] = dataUrl;
+
+                    const div = document.createElement('div');
+                    div.className = 'icon-preview';
+                    div.innerHTML = `
+                        <img src="${dataUrl}" width="${Math.min(size, 128)}" height="${Math.min(size, 128)}">
+                        <p>icon-${size}x${size}.png</p>
+                    `;
+                    previews.appendChild(div);
+                }
+
+                status.innerHTML = `Generated ${sizes.length} icons successfully! Click "Download All Icons" to save them.`;
+            } catch (error) {
+                status.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        function downloadAllIcons() {
+            if (Object.keys(icons).length === 0) {
+                alert('Please generate icons first!');
+                return;
+            }
+
+            for (const [size, dataUrl] of Object.entries(icons)) {
+                const link = document.createElement('a');
+                link.download = `icon-${size}x${size}.png`;
+                link.href = dataUrl;
+                link.click();
+            }
+
+            document.getElementById('status').innerHTML += '<br>Downloads started! Check your downloads folder.';
+        }
+
+        // Auto-generate on load
+        window.onload = generateAllIcons;
+    </script>
+</body>
+</html>

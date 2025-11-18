@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1976d2"/>
+  <g fill="white">
+    <!-- Barcode lines -->
+    <rect x="96" y="128" width="16" height="256" rx="4"/>
+    <rect x="128" y="128" width="8" height="256" rx="2"/>
+    <rect x="152" y="128" width="24" height="256" rx="4"/>
+    <rect x="192" y="128" width="8" height="256" rx="2"/>
+    <rect x="216" y="128" width="16" height="256" rx="4"/>
+    <rect x="248" y="128" width="24" height="256" rx="4"/>
+    <rect x="288" y="128" width="8" height="256" rx="2"/>
+    <rect x="312" y="128" width="16" height="256" rx="4"/>
+    <rect x="344" y="128" width="8" height="256" rx="2"/>
+    <rect x="368" y="128" width="24" height="256" rx="4"/>
+    <rect x="408" y="128" width="8" height="256" rx="2"/>
+    <!-- Scanner frame corners -->
+    <path d="M64 160 L64 96 L128 96" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M448 160 L448 96 L384 96" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M64 352 L64 416 L128 416" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M448 352 L448 416 L384 416" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>
