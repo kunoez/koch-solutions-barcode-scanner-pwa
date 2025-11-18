@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1976d2">
+    <meta name="description" content="Koch Solutions Barcode Scanner - Offline-first PWA">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Barcode Scanner">
+
+    <title>Barcode Scanner</title>
+
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+
+    <!-- Material Design CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-header">
+                <i class="material-icons login-icon">qr_code_scanner</i>
+                <h1>Barcode Scanner</h1>
+                <p class="company-name">Koch Solutions GmbH</p>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <input type="email" id="loginEmail" required autocomplete="email">
+                    <label for="loginEmail">Email</label>
+                    <span class="error-message" id="emailError"></span>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" id="loginPassword" required autocomplete="current-password">
+                    <label for="loginPassword">Password</label>
+                    <span class="error-message" id="passwordError"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    <span class="btn-text">LOGIN</span>
+                    <span class="btn-loader" style="display: none;">
+                        <span class="spinner"></span>
+                    </span>
+                </button>
+
+                <div id="loginError" class="error-banner" style="display: none;"></div>
+            </form>
+
+            <div class="offline-indicator" id="offlineIndicator" style="display: none;">
+                <i class="material-icons">cloud_off</i>
+                <span>You are offline</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Selection Screen -->
+    <div id="projectScreen" class="screen">
+        <div class="app-bar">
+            <h1 class="app-title">Select Project</h1>
+            <button class="icon-btn" id="refreshProjectsBtn">
+                <i class="material-icons">refresh</i>
+            </button>
+        </div>
+
+        <div class="project-container">
+            <p class="subtitle">Choose a project to continue</p>
+
+            <div id="projectsList" class="projects-list">
+                <div class="loading-state">
+                    <div class="spinner-large"></div>
+                    <p>Loading projects...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="mainScreen" class="screen">
+        <!-- Top App Bar -->
+        <div class="app-bar">
+            <h1 class="app-title">Barcode Scanner</h1>
+            <div class="app-bar-actions">
+                <button class="icon-btn" id="syncBtn" title="Sync data">
+                    <i class="material-icons">sync</i>
+                    <span class="badge" id="syncBadge" style="display: none;">0</span>
+                </button>
+                <button class="icon-btn" id="menuBtn">
+                    <i class="material-icons">more_vert</i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sync Status Banner -->
+        <div id="syncBanner" class="sync-banner" style="display: none;">
+            <i class="material-icons">cloud_queue</i>
+            <span id="syncBannerText">0 scans waiting to sync</span>
+            <button class="btn-text-small" id="syncNowBtn">Sync Now</button>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="scan">
+                <i class="material-icons">qr_code_scanner</i>
+                <span>Scan</span>
+            </button>
+            <button class="nav-item" data-tab="manual">
+                <i class="material-icons">edit</i>
+                <span>Manual</span>
+            </button>
+            <button class="nav-item" data-tab="package">
+                <i class="material-icons">inventory_2</i>
+                <span>Package</span>
+            </button>
+            <button class="nav-item" data-tab="view">
+                <i class="material-icons">list</i>
+                <span>View</span>
+            </button>
+        </nav>
+
+        <!-- Content Container -->
+        <div class="content-container">
+            <!-- Scan Tab -->
+            <div id="scanTab" class="tab-content active">
+                <div class="scan-container">
+                    <div id="scannerView" class="scanner-view">
+                        <div class="scanner-placeholder">
+                            <i class="material-icons">qr_code_scanner</i>
+                            <p>Waiting for scan...</p>
+                        </div>
+                        <div id="videoContainer" style="display: none;">
+                            <video id="scannerVideo" playsinline></video>
+                            <div class="scanner-overlay">
+                                <div class="scanner-frame"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="startScanBtn" class="btn btn-primary btn-large">
+                        <i class="material-icons">qr_code_scanner</i>
+                        <span>Start Scanner</span>
+                    </button>
+
+                    <div id="scanDataForm" class="scan-form" style="display: none;">
+                        <div class="form-field">
+                            <label>Barcode</label>
+                            <input type="text" id="scannedBarcode" readonly>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Location</label>
+                            <div class="location-display" id="scanLocation">
+                                <i class="material-icons">my_location</i>
+                                <span id="locationText">Getting location...</span>
+                            </div>
+                            <button class="btn btn-outlined btn-small" id="editLocationBtn">
+                                <i class="material-icons">edit_location</i>
+                                Edit Location
+                            </button>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Storage Marker</label>
+                            <input type="text" id="scanComment" placeholder="Enter storage marker" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Photos (0/10)</label>
+                            <div class="photo-grid" id="photoGrid"></div>
+                            <button class="btn btn-outlined" id="addPhotoBtn">
+                                <i class="material-icons">add_photo_alternate</i>
+                                Add Photo
+                            </button>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-outlined" id="clearScanBtn">Clear</button>
+                            <button class="btn btn-primary" id="submitScanBtn">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Tab -->
+            <div id="manualTab" class="tab-content">
+                <div class="manual-container">
+                    <h2>Manual Entry</h2>
+
+                    <div class="form-field">
+                        <label>Barcode</label>
+                        <input type="text" id="manualBarcode" placeholder="Enter barcode manually">
+                    </div>
+
+                    <div class="form-field">
+                        <label>Location</label>
+                        <div class="location-display" id="manualLocation">
+                            <i class="material-icons">my_location</i>
+                            <span id="manualLocationText">Getting location...</span>
+                        </div>
+                        <button class="btn btn-outlined btn-small" id="editManualLocationBtn">
+                            <i class="material-icons">edit_location</i>
+                            Edit Location
+                        </button>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Storage Marker</label>
+                        <input type="text" id="manualComment" placeholder="Enter storage marker" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Photos (0/10)</label>
+                        <div class="photo-grid" id="manualPhotoGrid"></div>
+                        <button class="btn btn-outlined" id="addManualPhotoBtn">
+                            <i class="material-icons">add_photo_alternate</i>
+                            Add Photo
+                        </button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-outlined" id="clearManualBtn">Clear</button>
+                        <button class="btn btn-primary" id="submitManualBtn">Submit</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Package Tab -->
+            <div id="packageTab" class="tab-content">
+                <div class="package-container">
+                    <h2>Package Scanning</h2>
+                    <p class="subtitle">Scan package barcodes to track parts</p>
+
+                    <div id="packageContent" class="empty-state">
+                        <i class="material-icons">inventory_2</i>
+                        <p>Package scanning will be available here</p>
+                        <p class="small">Scan a package barcode to begin</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Tab -->
+            <div id="viewTab" class="tab-content">
+                <div class="view-container">
+                    <h2>Scanned Items</h2>
+
+                    <div id="scansList" class="scans-list">
+                        <div class="empty-state">
+                            <i class="material-icons">qr_code_2</i>
+                            <p>No scans yet</p>
+                            <p class="small">Your scanned data will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Overlay -->
+    <div id="menuOverlay" class="menu-overlay" style="display: none;">
+        <div class="menu-backdrop"></div>
+        <div class="menu-content">
+            <div class="menu-header">
+                <h3>Menu</h3>
+                <button class="icon-btn" id="closeMenuBtn">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="menu-items">
+                <button class="menu-item" id="changeProjectBtn">
+                    <i class="material-icons">folder</i>
+                    <span>Change Project</span>
+                </button>
+                <button class="menu-item" id="syncOfflineDataBtn">
+                    <i class="material-icons">cloud_download</i>
+                    <span>Sync Offline Data</span>
+                </button>
+                <button class="menu-item" id="logoutBtn">
+                    <i class="material-icons">logout</i>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for photos -->
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;">
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/db.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/scanner.js"></script>
+    <script src="/js/location.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/app.js"></script>
+
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.error('Service Worker registration failed', err));
+        }
+    </script>
+</body>
+</html>
